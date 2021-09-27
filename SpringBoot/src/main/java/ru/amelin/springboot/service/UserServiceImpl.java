@@ -1,68 +1,118 @@
 package ru.amelin.springboot.service;
 
-import ru.amelin.springboot.dao.UserDao;
-import lombok.AllArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+import ru.amelin.springboot.dao.UserDao;
 import ru.amelin.springboot.entity.Role;
 import ru.amelin.springboot.entity.User;
 
 import javax.transaction.Transactional;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
-@AllArgsConstructor
-public class UserServiceImpl implements UserService {
-    private final UserDao userDao;
-    private final PasswordEncoder passwordEncoder;
+public class UserServiceImpl implements UserService, UserDetailsService {
 
-    @Override
+    private UserDao userDao;
+
+    @Autowired
+    public UserServiceImpl(UserDao userDao) {
+        this.userDao = userDao;
+    }
+
     @Transactional
-    public void addUser(User user) {
-        String encryptedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encryptedPassword);
-        userDao.addUser(user);
+    @Override
+    public List<User> getAllUsers() {
+        return userDao.getAllUsers();
     }
 
-    @Override
     @Transactional
-    public List<User> getAllUser() {
-        return userDao.getAllUser();
+    @Override
+    public boolean addUser(User user) {
+        if (userExist(user.getEmail())) {
+            return false;
+        } else if (user.getUsername().trim().length() == 0 || user.getPassword().trim().length() == 0 ||
+                user.getEmail().trim().length() == 0 || user.getLastname().trim().length() == 0 || user.getRoles().equals("null")) {
+            return false;
+        } else {
+            userDao.addUser(user);
+            return true;
+        }
     }
 
-    @Override
     @Transactional
-    public User getUser(int id) {
-        return userDao.getUser(id);
+    @Override
+    public User getUserByEmail(String email) {
+        return userDao.getUserByEmail(email);
     }
 
-    @Override
-    public User getUser(String login) {
-        return userDao.getUser(login);
-    }
-
-    @Override
     @Transactional
-    public void updateUser(int id, User user) {
-        String encryptedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encryptedPassword);
-        userDao.updateUser(id, user);
+    @Override
+    public void removeUser(int id) {
+        userDao.removeUser(id);
     }
 
-    @Override
     @Transactional
-    public void deleteUser(int id) {
-        userDao.deleteUser(id);
+    @Override
+    public boolean updateUser(User user) {
+        if (user.getUsername().trim().length() == 0 || user.getPassword().trim().length() == 0 ||
+                user.getEmail().trim().length() == 0 || user.getLastname().trim().length() == 0 || user.getRoles().equals("null")) {
+            return false;
+        } else {
+            userDao.updateUser(user);
+            return true;
+        }
     }
 
-    @Override
     @Transactional
-    public Role getRoleById(int id) {
-        return userDao.getRoleById(id);
+    @Override
+    public void addFirstAdminAndUser() {
+        Set<Role> adminRoles = new HashSet<>();
+        adminRoles.add(new Role("ADMIN"));
+        adminRoles.add(new Role("USER"));
+        addUser(new User("admin@mail.ru", "admin", "Admin", "Admins", 100, adminRoles));
+        Set<Role> userRoles = new HashSet<>();
+        userRoles.add(new Role("USER"));
+        addUser(new User("nick@mail.ru", "user", "Nick", "Amin", 30, userRoles));
     }
 
     @Override
-    public Role getRoleByName(String name) {
-        return userDao.getRoleByName(name);
+    public Set<Role> getRoleForUser(String roles) {
+        Set<Role> rolesSet = new HashSet<>();
+        try {
+            String[] partsRole = roles.split(",");
+            for (String role : partsRole) {
+                rolesSet.add(new Role(role));
+            }
+            return rolesSet;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        rolesSet.add(new Role(roles));
+        return rolesSet;
     }
+
+    @Transactional
+    @Override
+    public UserDetails loadUserByUsername(String email) {
+        Optional<User> currentUser = Optional.ofNullable(userDao.getUserByEmail(email));
+        return currentUser.orElseThrow(IllegalAccessError::new);
+    }
+
+    @Transactional
+    @Override
+    public User getUserById(int id) {
+        return userDao.getUserById(id);
+    }
+
+    @Transactional
+    @Override
+    public boolean userExist(String email) {
+        return userDao.userExist(email);
+    }
+
 }

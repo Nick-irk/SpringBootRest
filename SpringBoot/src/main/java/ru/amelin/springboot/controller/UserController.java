@@ -1,88 +1,63 @@
 package ru.amelin.springboot.controller;
 
-import org.springframework.dao.DataAccessException;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import ru.amelin.springboot.entity.Role;
 import ru.amelin.springboot.entity.User;
 import ru.amelin.springboot.service.UserService;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.security.Principal;
-import java.util.HashSet;
 import java.util.Set;
-
+import javax.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/")
 public class UserController {
-    private final UserService userService;
-    private final HttpServletResponse response;
+    private UserService userService;
 
-    public UserController(UserService userService, HttpServletResponse response) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.response = response;
     }
 
-    @GetMapping("/login")
-    public String loginPage() {
-        return "login";
-    }
-
-    @GetMapping("/user")
-    public String showUser(Model model, Principal principal) {
-        User user = userService.getUser(principal.getName());
-        model.addAttribute("user", user);
-        return "user";
-    }
-
-    @GetMapping("/admin")
-    public String getUsers(Model model) {
-        model.addAttribute("users", userService.getAllUser());
-        return "users";
-    }
-
-    @GetMapping("admin/{id}")
-    public String getUser(@PathVariable("id") int id, Model model) {
-        model.addAttribute("user", userService.getUser(id));
-        return "user";
-    }
-
-    @GetMapping("admin/new")
-    public String newUser(@ModelAttribute("user") User user) {
-        return "new";
-    }
-
-    @PostMapping("/admin")
-    public String addUser(@ModelAttribute("user") User user, @ModelAttribute("my_role") String my_role) throws IOException {
-        try {
-            Set<Role> roles = new HashSet<>();
-            roles.add(userService.getRoleByName(my_role));
-            roles.add(userService.getRoleByName("USER"));
-            user.setRoles(roles);
-            userService.addUser(user);
-        } catch (DataAccessException e) {
-            response.sendError(400, "Role does not exist");
-            return "users";
+        @GetMapping("/admin/table")
+        public String getTable(Model model, HttpSession session) {
+            model.addAttribute("user", session.getAttribute("user"));
+            model.addAttribute("users", userService.getAllUsers());
+            return "table";
         }
-        return "redirect:/admin";
-    }
 
-    @GetMapping("admin/{id}/update")
-    public String editUser(Model model, @PathVariable("id") int id) {
-        model.addAttribute("user", userService.getUser(id));
-        return "update";
-    }
+        @PostMapping("/admin/table")
+        public String addUser(String email, String password, String firstname, String lastname, int age, String roles) {
+            Set<Role> roleSet = userService.getRoleForUser(roles);
+            userService.addUser(new User(email, password, firstname, lastname, age, roleSet));
+            return "redirect:/admin/table";
+        }
 
-    @PatchMapping("admin/{id}")
-    public String updateUser(@ModelAttribute("user") User user, @PathVariable("id") int id) {
-        userService.updateUser(id, user);
-        return "redirect:/admin";
-    }
+        @PostMapping("/admin/remove")
+        public String removeUser(int id) {
+            userService.removeUser(id);
+            return "redirect:/admin/table";
+        }
 
-    @DeleteMapping("admin/{id}")
-    public String deleteUser(@PathVariable("id") int id) {
-        userService.deleteUser(id);
-        return "redirect:/admin";
-    }
+        @PostMapping("/admin/update")
+        public String updateUser(int id, String email, String password, String firstname, String lastname, int age, String roles) {
+            Set<Role> roleSet = userService.getRoleForUser(roles);
+            userService.updateUser(new User(id, email, password, firstname, lastname, age, roleSet));
+            return "redirect:/admin/table";
+        }
+
+        @GetMapping(value = {"/", "/login"})
+        public String loginPage() {
+            return "login";
+        }
+
+        @GetMapping(value = "/user")
+        public String userPage(Model model, HttpSession session) {
+            model.addAttribute("user", session.getAttribute("user"));
+            return "user";
+        }
+
+        @GetMapping(value = "/admin/newUser")
+        public String newUser(Model model, HttpSession session) {
+            model.addAttribute("user", session.getAttribute("user"));
+            return "/newUser";
+        }
 }

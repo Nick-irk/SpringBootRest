@@ -1,7 +1,6 @@
 package ru.amelin.springboot.dao;
 
 import org.springframework.stereotype.Repository;
-import ru.amelin.springboot.entity.Role;
 import ru.amelin.springboot.entity.User;
 
 import javax.persistence.EntityManager;
@@ -14,55 +13,41 @@ public class UserDaoImpl implements UserDao {
     private EntityManager entityManager;
 
     @Override
+    public List<User> getAllUsers() {
+        return entityManager.createQuery("FROM User", User.class).getResultList();
+    }
+
+    @Override
     public void addUser(User user) {
         entityManager.persist(user);
     }
 
     @Override
-    public List<User> getAllUser() {
-        return entityManager.createQuery("SELECT u FROM User u", User.class).getResultList();
-    }
-
-    @Override
-    public User getUser(int id) {
-        return entityManager.find(User.class, id);
-    }
-
-    @Override
-    public void updateUser(int id, User user) {
+    public void updateUser(User user) {
         entityManager.merge(user);
     }
 
     @Override
-    public void deleteUser(int id) {
-        entityManager.remove(getUser(id));
+    public void removeUser(int id) {
+        entityManager.remove(getUserById(id));
     }
 
     @Override
-    public User findByLogin(String login) {
-        return entityManager.createQuery("SELECT u FROM User u WHERE u.name = :name", User.class)
-                .setParameter("name", login)
+    public User getUserById(int id) {
+        return entityManager.find(User.class, id);
+    }
+
+    @Override
+    public User getUserByEmail(String email) {
+        return (User) entityManager.createQuery("FROM User WHERE email =:e")
+                .setParameter("e", email)
                 .getSingleResult();
     }
 
     @Override
-    public User getUser(String login) {
-        return entityManager.createQuery("SELECT u FROM User u WHERE u.name = :name", User.class)
-                .setParameter("name", login)
-                .getSingleResult();
-    }
-
-    @Override
-    public Role getRoleById(int id) {
-        return entityManager.createQuery("SELECT u FROM Role u WHERE u.id = :id", Role.class)
-                .setParameter("id", id)
-                .getSingleResult();
-    }
-
-    @Override
-    public Role getRoleByName(String name) {
-        return entityManager.createQuery("SELECT u FROM Role u WHERE u.name = :name", Role.class)
-                .setParameter("name", name)
-                .getSingleResult();
+    public boolean userExist(String email) {
+        return getAllUsers()
+                .stream()
+                .anyMatch((e) -> e.getEmail().hashCode() == email.hashCode());
     }
 }

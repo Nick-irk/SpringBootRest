@@ -3,22 +3,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <title>Login</title>
 </head>
-<body>
-<div>
-    <form method="post" action="/login">
-        <label for="login">Login</label>
-        <br>
-        <input id="login" name="j_username"/>
-        <br>
-        <label for="password">Password</label>
-        <br>
-        <input id="password" name="j_password"/>
-        <br>
-        <br>
-        <input type="submit"/>
+<body class="bg-light">
+    <form class="form-signin" method="post" action="/login">
+        <div class="mx-auto my-5" style="width: 300px;">
+            <label><h3>Please login</h3></label>
+            <input type="email" name="j_username" class="form-control " placeholder="Login">
+            <input type="password" name="j_password" class="form-control" placeholder="Password">
+            <button type="submit" class="btn btn-primary my-2 btn-block">Sign in</button>
+        </div>
     </form>
-</div>
 </body>
 </html>
