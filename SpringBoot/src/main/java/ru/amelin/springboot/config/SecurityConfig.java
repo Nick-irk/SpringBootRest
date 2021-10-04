@@ -20,7 +20,7 @@ import ru.amelin.springboot.config.handler.LoginSuccessHandler;
 @EnableWebSecurity
 @ComponentScan("ru.amelin.springboot")
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    private final UserDetailsService userDetailsService;
+    private UserDetailsService userDetailsService;
 
     @Autowired
     public SecurityConfig(@Qualifier("userServiceImpl") UserDetailsService userDetailsService) {
@@ -35,7 +35,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.formLogin()
+                .loginPage("/login")
                 .successHandler(new LoginSuccessHandler())
+                .loginProcessingUrl("/login")
+                .usernameParameter("j_username")
+                .passwordParameter("j_password")
                 .permitAll();
 
         http.logout()
@@ -47,8 +51,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .authorizeRequests()
                 .antMatchers("/login").anonymous()
-                .antMatchers("/admin/**").hasAuthority("ADMIN")
-                .antMatchers("/user/**").authenticated();
+                .antMatchers("/api/admin/*").access("hasAuthority('ADMIN')")
+                .antMatchers("/api//user/*").hasAnyAuthority("USER", "ADMIN");
     }
 
     @Bean

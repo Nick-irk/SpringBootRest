@@ -68,17 +68,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         }
     }
 
-    @Transactional
-    @Override
-    public void addFirstAdminAndUser() {
-        Set<Role> adminRoles = new HashSet<>();
-        adminRoles.add(new Role("ADMIN"));
-        adminRoles.add(new Role("USER"));
-        addUser(new User("admin@mail.ru", "admin", "Admin", "Admins", 100, adminRoles));
-        Set<Role> userRoles = new HashSet<>();
-        userRoles.add(new Role("USER"));
-        addUser(new User("nick@mail.ru", "user", "Nick", "Amin", 30, userRoles));
-    }
+
 
     @Override
     public Set<Role> getRoleForUser(String roles) {

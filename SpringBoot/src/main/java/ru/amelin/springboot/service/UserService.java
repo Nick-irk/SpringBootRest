@@ -19,8 +19,6 @@ public interface UserService {
 
     public User getUserByEmail(String email);
 
-    public void addFirstAdminAndUser();
-
     public Set<Role> getRoleForUser(String roles);
 
     public boolean userExist(String email);
